@@ -10,6 +10,12 @@ Superpowers가 spec→설계→TDD 구현→리뷰로 **코드를 완성**하면
 3. `az login` 실행 → `az account show`로 구독 확인 → **간단한 권한 체크**(리소스그룹 생성 권한 등) → 결과를 `.azure-deploy/login-status.md`에 기록.
 4. 로그인/권한 실패면 작업을 진행하지 않고 사용자에게 알린다. 성공해야만 다음으로.
 
+## 0.5 데이터 저장 방식 먼저 묻기 (ideation 전)
+로그인 통과 후, **코딩 시작 전에** 정한다: "데이터를 정식 DB에 저장할까요?"
+- **간단 ✨(기본)**: 파일/SQLite. App Service 단독, 빠른 MVP.
+- **정식 DB**: 처음부터 **PostgreSQL 전제**로 스키마·코드 작성하도록 Superpowers에 지시 → azure-provision이 Azure DB for PostgreSQL(키리스)로 배포. 사후 전환 불필요.
+- 선택을 `.azure-deploy/decisions.md`에 적어 provision/deploy가 따른다.
+
 ## 역할 분담
 - **Superpowers**: 요구분석·계획·TDD·서브에이전트 리뷰까지(코드 완성). 그대로 신뢰하고 쓴다.
 - **이 레이어(우리)**: 코드 완성 후 **Azure 배포**. 직접 만들지 말고 azure-deploy 에이전트 + azure-provision 스킬 + Microsoft 빌트인 스킬에 위임.
