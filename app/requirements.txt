@@ -1,0 +1,9 @@
+fastapi
+jinja2
+psycopg[binary]
+youtube-transcript-api
+google-api-python-client
+openai
+azure-identity
+pytest
+uvicorn
