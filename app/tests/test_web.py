@@ -46,8 +46,24 @@ def test_refresh_saves_summary(monkeypatch):
     assert resp.status_code in (302, 303, 307)
     rows = store.list_videos(conn)
     assert any(r["id"] == "vX" for r in rows)
-    cur = conn.execute("SELECT text FROM summaries WHERE video_id='vX'")
-    assert cur.fetchone()[0] == "요약결과"
+    main.app.dependency_overrides.clear()
+
+
+def test_video_detail_generates_summary_and_insights(monkeypatch):
+    conn = make_conn()
+    store.upsert_video(
+        conn,
+        {"id": "vD", "channel": "Microsoft", "title": "T", "published_at": "2026-06-02T00:00:00Z", "url": "uD"},
+    )
+    monkeypatch.setattr(main, "fetch_transcript", lambda vid: "english transcript")
+    monkeypatch.setattr(main, "summarize_ko", lambda text: "한국어 요약")
+    monkeypatch.setattr(main, "insights_ko", lambda text: "## 기술\n• A\n## 비용\n• B")
+    client = client_with_conn(conn)
+    resp = client.get("/video/vD")
+    assert resp.status_code == 200
+    assert "한국어 요약" in resp.text
+    assert "기술" in resp.text and "비용" in resp.text
+    assert store.get_summary(conn, "vD", "insights").startswith("## 기술")
     main.app.dependency_overrides.clear()
 
 

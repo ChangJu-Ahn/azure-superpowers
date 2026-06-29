@@ -114,6 +114,44 @@ def has_summary(conn, video_id, lang):
     return cur.fetchone() is not None
 
 
+def get_summary(conn, video_id, lang):
+    p = _ph(conn)
+    cur = conn.cursor()
+    cur.execute(
+        f"SELECT text FROM summaries WHERE video_id = {p} AND lang = {p} "
+        f"ORDER BY created_at DESC LIMIT 1",
+        (video_id, lang),
+    )
+    row = cur.fetchone()
+    return row[0] if row else None
+
+
+def get_video(conn, video_id):
+    p = _ph(conn)
+    cur = conn.cursor()
+    cur.execute(
+        f"SELECT id, channel, title, published_at, url, fetched_at "
+        f"FROM videos WHERE id = {p}",
+        (video_id,),
+    )
+    row = cur.fetchone()
+    if not row:
+        return None
+    cols = [c[0] for c in cur.description]
+    return dict(zip(cols, row))
+
+
+def get_transcript(conn, video_id, lang):
+    p = _ph(conn)
+    cur = conn.cursor()
+    cur.execute(
+        f"SELECT text FROM transcripts WHERE video_id = {p} AND lang = {p} LIMIT 1",
+        (video_id, lang),
+    )
+    row = cur.fetchone()
+    return row[0] if row else None
+
+
 def add_channel(conn, handle, label=None):
     p = _ph(conn)
     added_at = datetime.now(timezone.utc).isoformat()

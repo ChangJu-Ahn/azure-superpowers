@@ -5,3 +5,6 @@ __pycache__/
 .DS_Store
 .venv/
 .azure-deploy/
+deploy.zip
+image-*.png
+DEMO.md

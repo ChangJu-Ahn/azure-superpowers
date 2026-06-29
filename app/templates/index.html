@@ -90,11 +90,11 @@
       <div class="grid">
         {% for v in videos %}
         <div class="card">
-          <img class="thumb" src="https://i.ytimg.com/vi/{{ v.id }}/mqdefault.jpg" alt="" loading="lazy">
+          <a href="/video/{{ v.id }}"><img class="thumb" src="https://i.ytimg.com/vi/{{ v.id }}/mqdefault.jpg" alt="" loading="lazy"></a>
           <div class="body">
             <span class="badge">{{ v.channel }}</span>
             <span class="date">{{ v.published_at[:10] }}</span>
-            <h2><a href="{{ v.url }}" target="_blank" rel="noopener">{{ v.title }}</a></h2>
+            <h2><a href="/video/{{ v.id }}">{{ v.title }}</a></h2>
             <div class="summary">{{ v.summary or "요약 없음" }}</div>
           </div>
         </div>
