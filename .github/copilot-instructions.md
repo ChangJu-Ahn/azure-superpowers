@@ -31,3 +31,6 @@ Superpowers가 spec→설계→TDD 구현→리뷰로 **코드를 완성**하면
 1. **azure-provision**: 코드가 요구하는 리소스 판별(웹앱, DB 등) → Azure 매핑(App Service, Azure DB for PostgreSQL/SQL).
 2. **azure-deploy**: 단일 RG에 키리스로 프로비저닝+배포 → URL. 빌트인 `python-appservice-deploy`/`azure-prepare` 위임.
 3. resources.md 기록. 증분이면 기존 RG 재사용.
+
+## ⚡ 배포는 끝까지 자동 (멈춤 금지)
+"배포해줘" 한 번이면 provision→deploy→URL까지 **재확인 질문 없이** 실제 실행. azure.yaml/bicep 만들고 `azd up`/배포까지 진짜 돌린다. "준비됐다/진행할까요"로 끝내지 말 것 — URL이 나와야 끝. 실패 시에만 멈춰 원인·가이드.
