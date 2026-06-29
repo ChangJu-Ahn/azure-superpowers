@@ -70,7 +70,10 @@ def _summarize_and_store(conn, video):
     text = fetch_transcript(video["id"])
     if text:
         store.save_transcript(conn, video["id"], "ko", text)
-    summary = summarize_ko(text or video["title"])
+    try:
+        summary = summarize_ko(text or video["title"])
+    except Exception:
+        summary = "요약 대기 중 (Azure OpenAI 미연결)"
     store.save_summary(conn, video["id"], "ko", summary, os.environ.get("AOAI_DEPLOYMENT", ""))
 
 
