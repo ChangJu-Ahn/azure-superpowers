@@ -6,4 +6,3 @@ __pycache__/
 .venv/
 .azure-deploy/
 deploy.zip
-image-*.png
