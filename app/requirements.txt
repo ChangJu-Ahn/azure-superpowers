@@ -8,3 +8,4 @@ azure-identity
 pytest
 uvicorn
 httpx
+python-multipart

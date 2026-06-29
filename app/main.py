@@ -2,12 +2,12 @@
 
 import os
 
-from fastapi import Depends, FastAPI, Request
+from fastapi import Depends, FastAPI, Form, Request
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 import store
-from fetcher import fetch_recent, fetch_transcript
+from fetcher import fetch_recent, fetch_transcript, fetch_video, parse_channel_input, parse_video_id
 from summarizer import summarize_ko
 
 HANDLES = ["@microsoft", "@MicrosoftDeveloper", "@MicrosoftKorea"]
@@ -63,16 +63,38 @@ def index(request: Request, conn=Depends(get_conn)):
     )
 
 
+def _summarize_and_store(conn, video):
+    store.upsert_video(conn, video)
+    if store.has_summary(conn, video["id"], "ko"):
+        return
+    text = fetch_transcript(video["id"])
+    if text:
+        store.save_transcript(conn, video["id"], "ko", text)
+    summary = summarize_ko(text or video["title"])
+    store.save_summary(conn, video["id"], "ko", summary, os.environ.get("AOAI_DEPLOYMENT", ""))
+
+
 @app.post("/refresh")
-def refresh(conn=Depends(get_conn)):
+def refresh(urls: str = Form(""), days: int = Form(20), conn=Depends(get_conn)):
     api_key = os.environ.get("YOUTUBE_API_KEY", "")
-    for video in fetch_recent(HANDLES, api_key):
-        store.upsert_video(conn, video)
-        if store.has_summary(conn, video["id"], "ko"):
+    handles = list(HANDLES)
+    video_ids = []
+    for raw in urls.replace(",", "\n").split("\n"):
+        raw = raw.strip()
+        if not raw:
             continue
-        text = fetch_transcript(video["id"])
-        if text:
-            store.save_transcript(conn, video["id"], "ko", text)
-        summary = summarize_ko(text or video["title"])
-        store.save_summary(conn, video["id"], "ko", summary, os.environ.get("AOAI_DEPLOYMENT", ""))
+        vid = parse_video_id(raw)
+        if vid:
+            video_ids.append(vid)
+            continue
+        handle = parse_channel_input(raw)
+        if handle:
+            handles.append(handle)
+
+    for video in fetch_recent(handles, api_key, since_days=days):
+        _summarize_and_store(conn, video)
+    for vid in video_ids:
+        video = fetch_video(vid, api_key)
+        if video:
+            _summarize_and_store(conn, video)
     return RedirectResponse(url="/", status_code=303)

@@ -62,3 +62,31 @@ def test_fetch_transcript_none_on_exception():
     api = MagicMock()
     api.fetch.side_effect = Exception("no captions")
     assert fetcher.fetch_transcript("vid001", transcript_api=api) is None
+
+
+def test_parse_video_id_from_urls():
+    import fetcher
+    assert fetcher.parse_video_id("https://youtu.be/dQw4w9WgXcQ") == "dQw4w9WgXcQ"
+    assert fetcher.parse_video_id("https://www.youtube.com/watch?v=dQw4w9WgXcQ") == "dQw4w9WgXcQ"
+    assert fetcher.parse_video_id("https://www.youtube.com/@microsoft") is None
+
+
+def test_parse_channel_input():
+    import fetcher
+    assert fetcher.parse_channel_input("https://youtube.com/@MicrosoftKorea") == "@MicrosoftKorea"
+    assert fetcher.parse_channel_input("microsoft") == "@microsoft"
+    assert fetcher.parse_channel_input("https://youtu.be/dQw4w9WgXcQ") is None
+
+
+def test_fetch_recent_filters_by_days():
+    import fetcher
+    yt = type("S", (), {})()
+    fetcher._resolve_uploads_playlist = lambda y, h: ("Ch", "PL")
+    class _PI:
+        def list(self, **k): return self
+        def execute(self):
+            return {"items": [
+                {"snippet": {"resourceId": {"videoId": "old00000000"}, "title": "old", "publishedAt": "2000-01-01T00:00:00Z"}},
+            ]}
+    yt.playlistItems = lambda: _PI()
+    assert fetcher.fetch_recent(["@x"], "k", youtube=yt, since_days=20) == []
