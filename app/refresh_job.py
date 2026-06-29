@@ -38,8 +38,10 @@ def open_conn():
 def run_refresh(conn):
     api_key = os.environ.get("YOUTUBE_API_KEY", "")
     model = os.environ.get("AOAI_DEPLOYMENT", "")
+    store.seed_channels(conn, HANDLES)
+    handles = [c["handle"] for c in store.list_channels(conn)]
     count = 0
-    for video in fetch_recent(HANDLES, api_key):
+    for video in fetch_recent(handles, api_key):
         store.upsert_video(conn, video)
         if store.has_summary(conn, video["id"], "ko"):
             continue

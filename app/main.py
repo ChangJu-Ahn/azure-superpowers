@@ -7,7 +7,7 @@ from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 import store
-from fetcher import fetch_recent, fetch_transcript, fetch_video, parse_channel_input, parse_video_id
+from fetcher import fetch_recent, fetch_transcript, parse_channel_input
 from summarizer import summarize_ko
 
 HANDLES = ["@microsoft", "@MicrosoftDeveloper", "@MicrosoftKorea"]
@@ -57,10 +57,27 @@ def list_videos_with_summaries(conn):
 
 @app.get("/")
 def index(request: Request, conn=Depends(get_conn)):
+    store.seed_channels(conn, HANDLES)
     videos = list_videos_with_summaries(conn)
+    channels = store.list_channels(conn)
     return templates.TemplateResponse(
-        request, "index.html", {"videos": videos}
+        request, "index.html", {"videos": videos, "channels": channels}
     )
+
+
+@app.post("/channels")
+def add_channel(url: str = Form(""), conn=Depends(get_conn)):
+    handle = parse_channel_input(url)
+    if handle:
+        store.add_channel(conn, handle)
+    return RedirectResponse(url="/", status_code=303)
+
+
+@app.post("/channels/delete")
+def remove_channel(handle: str = Form(""), conn=Depends(get_conn)):
+    if handle:
+        store.delete_channel(conn, handle)
+    return RedirectResponse(url="/", status_code=303)
 
 
 def _summarize_and_store(conn, video):
@@ -78,26 +95,9 @@ def _summarize_and_store(conn, video):
 
 
 @app.post("/refresh")
-def refresh(urls: str = Form(""), days: int = Form(20), conn=Depends(get_conn)):
+def refresh(days: int = Form(20), conn=Depends(get_conn)):
     api_key = os.environ.get("YOUTUBE_API_KEY", "")
-    handles = list(HANDLES)
-    video_ids = []
-    for raw in urls.replace(",", "\n").split("\n"):
-        raw = raw.strip()
-        if not raw:
-            continue
-        vid = parse_video_id(raw)
-        if vid:
-            video_ids.append(vid)
-            continue
-        handle = parse_channel_input(raw)
-        if handle:
-            handles.append(handle)
-
+    handles = [c["handle"] for c in store.list_channels(conn)]
     for video in fetch_recent(handles, api_key, since_days=days):
         _summarize_and_store(conn, video)
-    for vid in video_ids:
-        video = fetch_video(vid, api_key)
-        if video:
-            _summarize_and_store(conn, video)
     return RedirectResponse(url="/", status_code=303)

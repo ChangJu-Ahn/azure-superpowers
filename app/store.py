@@ -33,6 +33,13 @@ SCHEMA = [
         created_at TEXT
     )
     """,
+    """
+    CREATE TABLE IF NOT EXISTS channels (
+        handle TEXT PRIMARY KEY,
+        label TEXT,
+        added_at TEXT
+    )
+    """,
 ]
 
 
@@ -105,6 +112,39 @@ def has_summary(conn, video_id, lang):
         (video_id, lang),
     )
     return cur.fetchone() is not None
+
+
+def add_channel(conn, handle, label=None):
+    p = _ph(conn)
+    added_at = datetime.now(timezone.utc).isoformat()
+    conn.cursor().execute(
+        f"INSERT INTO channels (handle, label, added_at) VALUES ({p}, {p}, {p}) "
+        f"ON CONFLICT (handle) DO NOTHING",
+        (handle, label, added_at),
+    )
+    conn.commit()
+
+
+def list_channels(conn):
+    cur = conn.cursor()
+    cur.execute("SELECT handle, label, added_at FROM channels ORDER BY added_at")
+    cols = [c[0] for c in cur.description]
+    return [dict(zip(cols, row)) for row in cur.fetchall()]
+
+
+def delete_channel(conn, handle):
+    p = _ph(conn)
+    conn.cursor().execute(f"DELETE FROM channels WHERE handle = {p}", (handle,))
+    conn.commit()
+
+
+def seed_channels(conn, handles):
+    cur = conn.cursor()
+    cur.execute("SELECT 1 FROM channels LIMIT 1")
+    if cur.fetchone() is not None:
+        return
+    for h in handles:
+        add_channel(conn, h)
 
 
 def list_videos(conn):

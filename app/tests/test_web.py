@@ -49,3 +49,27 @@ def test_refresh_saves_summary(monkeypatch):
     cur = conn.execute("SELECT text FROM summaries WHERE video_id='vX'")
     assert cur.fetchone()[0] == "요약결과"
     main.app.dependency_overrides.clear()
+
+
+def test_channels_crud_via_web():
+    conn = make_conn()
+    client = client_with_conn(conn)
+    client.post("/channels", data={"url": "https://www.youtube.com/@Microsoft"}, follow_redirects=False)
+    assert [c["handle"] for c in store.list_channels(conn)] == ["@Microsoft"]
+    client.post("/channels/delete", data={"handle": "@Microsoft"}, follow_redirects=False)
+    assert store.list_channels(conn) == []
+    main.app.dependency_overrides.clear()
+
+
+def test_refresh_uses_saved_channels(monkeypatch):
+    conn = make_conn()
+    store.add_channel(conn, "@onlythis")
+    used = {}
+    def fake_fetch(handles, key, since_days=None):
+        used["handles"] = handles
+        return []
+    monkeypatch.setattr(main, "fetch_recent", fake_fetch)
+    client = client_with_conn(conn)
+    client.post("/refresh", follow_redirects=False)
+    assert used["handles"] == ["@onlythis"]
+    main.app.dependency_overrides.clear()

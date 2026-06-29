@@ -8,6 +8,9 @@
 
 ## 한 줄
 Superpowers의 깊이 + Azure 배포 = 아이디어를 **GHCP만으로** Azure URL까지.
+![alt text](image-1.png)
+![alt text](image.png)
+![alt text](image-2.png)
 
 ## 왜 시너지인가 — 1+1이 3
 - **Superpowers**는 "잘 만든다"의 정점: 브레인스토밍·spec·TDD·리뷰로 **검증된 코드**. 그런데 끝이 코드라 노트북에 갇힌다.

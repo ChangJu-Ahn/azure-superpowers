@@ -43,6 +43,15 @@
     .card h2 a:hover { color:var(--brand); }
     .summary { color:var(--muted); font-size:.9rem; line-height:1.55; white-space:pre-wrap; }
     .empty { color:var(--muted); text-align:center; padding:4rem 0; }
+    .channels { margin:1.2rem 0; padding:1rem; background:var(--card); border:1px solid var(--line); border-radius:14px; }
+    .ch-add { display:flex; gap:.5rem; margin-bottom:.8rem; }
+    .ch-add input{ flex:1; padding:.55rem .8rem; border-radius:8px; border:1px solid var(--line); background:#0d1322; color:var(--txt); }
+    .ch-add button{ padding:.55rem 1rem; border-radius:8px; border:0; background:var(--brand); color:#fff; cursor:pointer; font-weight:600; }
+    .ch-list { display:flex; gap:.5rem; flex-wrap:wrap; }
+    .chip { display:inline-flex; align-items:center; gap:.3rem; background:#1a2236; border:1px solid var(--line);
+      padding:.3rem .7rem; border-radius:999px; font-size:.82rem; color:var(--txt); }
+    .chip button{ background:none; border:0; color:var(--muted); cursor:pointer; font-size:.8rem; padding:0; }
+    .chip button:hover{ color:#ff6b6b; }
     @media(max-width:600px){ .card{grid-template-columns:1fr} .thumb{width:100%;height:180px} .body{padding:0 1rem 1rem} }
   </style>
 </head>
@@ -54,13 +63,28 @@
         <p>Microsoft · Developer · Korea 채널 영상 한국어 요약</p>
       </div>
       <form action="/refresh" method="post" class="ctrl">
-        <input type="text" name="urls" placeholder="채널/영상 URL (선택, 쉼표로 여러 개)">
         <label>최근 <input type="number" name="days" value="20" min="1" max="365">일</label>
         <button class="refresh" type="submit">↻ 새로 고침</button>
       </form>
     </div>
   </div>
   <div class="wrap">
+    <div class="channels">
+      <form action="/channels" method="post" class="ch-add">
+        <input type="text" name="url" placeholder="채널 URL 또는 @핸들 추가" required>
+        <button type="submit">+ 채널 추가</button>
+      </form>
+      <div class="ch-list">
+        {% for c in channels %}
+        <span class="chip">{{ c.handle }}
+          <form action="/channels/delete" method="post" style="display:inline">
+            <input type="hidden" name="handle" value="{{ c.handle }}">
+            <button title="삭제">✕</button>
+          </form>
+        </span>
+        {% endfor %}
+      </div>
+    </div>
     {% if videos %}
       <div class="count">{{ videos|length }}개 영상</div>
       <div class="grid">

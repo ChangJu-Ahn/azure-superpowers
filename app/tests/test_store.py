@@ -72,3 +72,27 @@ def test_save_transcript_stored():
     rows = cur.fetchall()
     assert len(rows) == 1
     assert rows[0][0] == "갱신"
+
+
+def test_channels_add_list_delete():
+    conn = make_conn()
+    store.add_channel(conn, "@microsoft")
+    store.add_channel(conn, "@MicrosoftKorea")
+    handles = [c["handle"] for c in store.list_channels(conn)]
+    assert handles == ["@microsoft", "@MicrosoftKorea"]
+    store.delete_channel(conn, "@microsoft")
+    assert [c["handle"] for c in store.list_channels(conn)] == ["@MicrosoftKorea"]
+
+
+def test_add_channel_dedup():
+    conn = make_conn()
+    store.add_channel(conn, "@microsoft")
+    store.add_channel(conn, "@microsoft")
+    assert len(store.list_channels(conn)) == 1
+
+
+def test_seed_channels_only_when_empty():
+    conn = make_conn()
+    store.seed_channels(conn, ["@a", "@b"])
+    store.seed_channels(conn, ["@c"])
+    assert [c["handle"] for c in store.list_channels(conn)] == ["@a", "@b"]
