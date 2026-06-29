@@ -5,34 +5,69 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>MS YouTube 인사이트</title>
   <style>
-    body { font-family: -apple-system, "Segoe UI", sans-serif; max-width: 860px; margin: 2rem auto; padding: 0 1rem; color: #222; }
-    header { display: flex; justify-content: space-between; align-items: center; }
-    h1 { font-size: 1.5rem; }
-    .refresh { background: #0078d4; color: #fff; border: 0; padding: .6rem 1.2rem; border-radius: 6px; cursor: pointer; }
-    .card { border: 1px solid #e1e1e1; border-radius: 8px; padding: 1rem; margin: 1rem 0; }
-    .meta { color: #666; font-size: .85rem; margin-bottom: .5rem; }
-    .summary { white-space: pre-wrap; line-height: 1.5; }
-    .empty { color: #888; }
+    :root {
+      --bg:#0b1020; --card:#1a2238; --line:#283150;
+      --txt:#e8ecf6; --muted:#9aa6c4; --brand:#4cc2ff; --brand2:#7b61ff;
+    }
+    * { box-sizing:border-box; }
+    body { font-family:-apple-system,"Segoe UI",Roboto,sans-serif; margin:0; color:var(--txt);
+      background:radial-gradient(1200px 600px at 80% -10%, #1d2540 0, transparent 60%), var(--bg); min-height:100vh; }
+    .wrap { max-width:960px; margin:0 auto; padding:0 1.2rem 4rem; }
+    .hero { background:linear-gradient(120deg,var(--brand2),var(--brand)); padding:2.4rem 0; margin-bottom:2rem;
+      box-shadow:0 10px 40px rgba(76,194,255,.15); }
+    .hero .wrap { display:flex; justify-content:space-between; align-items:center; gap:1rem; }
+    .hero h1 { font-size:1.7rem; margin:0; color:#fff; letter-spacing:-.5px; }
+    .hero p { margin:.3rem 0 0; color:rgba(255,255,255,.85); font-size:.9rem; }
+    .refresh { background:rgba(255,255,255,.18); color:#fff; border:1px solid rgba(255,255,255,.35);
+      padding:.7rem 1.3rem; border-radius:10px; cursor:pointer; font-weight:600; transition:.15s; }
+    .refresh:hover { background:rgba(255,255,255,.3); transform:translateY(-1px); }
+    .count { color:var(--muted); font-size:.85rem; margin-bottom:1rem; }
+    .grid { display:grid; gap:1.1rem; }
+    .card { display:grid; grid-template-columns:168px 1fr; gap:1rem; background:var(--card);
+      border:1px solid var(--line); border-radius:14px; overflow:hidden; transition:.18s; }
+    .card:hover { border-color:var(--brand); transform:translateY(-2px); box-shadow:0 8px 30px rgba(0,0,0,.35); }
+    .thumb { width:168px; height:108px; object-fit:cover; background:#0d1322; }
+    .body { padding:1rem 1.1rem 1.1rem 0; }
+    .badge { display:inline-block; font-size:.72rem; font-weight:700; padding:.2rem .6rem; border-radius:999px;
+      margin-bottom:.5rem; color:#fff; background:#555f7e; }
+    .date { color:var(--muted); font-size:.78rem; margin-left:.5rem; }
+    .card h2 { font-size:1.02rem; margin:0 0 .4rem; line-height:1.35; }
+    .card h2 a { color:var(--txt); text-decoration:none; }
+    .card h2 a:hover { color:var(--brand); }
+    .summary { color:var(--muted); font-size:.9rem; line-height:1.55; white-space:pre-wrap; }
+    .empty { color:var(--muted); text-align:center; padding:4rem 0; }
+    @media(max-width:600px){ .card{grid-template-columns:1fr} .thumb{width:100%;height:180px} .body{padding:0 1rem 1rem} }
   </style>
 </head>
 <body>
-  <header>
-    <h1>MS YouTube 인사이트</h1>
-    <form action="/refresh" method="post">
-      <button class="refresh" type="submit">새로 고침</button>
-    </form>
-  </header>
-
-  {% if videos %}
-    {% for v in videos %}
-    <div class="card">
-      <div class="meta">{{ v.channel }} · {{ v.published_at }}</div>
-      <h2><a href="{{ v.url }}" target="_blank" rel="noopener">{{ v.title }}</a></h2>
-      <div class="summary">{{ v.summary or "요약 없음" }}</div>
+  <div class="hero">
+    <div class="wrap">
+      <div>
+        <h1>🎬 MS YouTube 인사이트</h1>
+        <p>Microsoft · Developer · Korea 채널 영상 한국어 요약</p>
+      </div>
+      <form action="/refresh" method="post"><button class="refresh" type="submit">↻ 새로 고침</button></form>
     </div>
-    {% endfor %}
-  {% else %}
-    <p class="empty">아직 영상이 없습니다. 새로 고침을 눌러 가져오세요.</p>
-  {% endif %}
+  </div>
+  <div class="wrap">
+    {% if videos %}
+      <div class="count">{{ videos|length }}개 영상</div>
+      <div class="grid">
+        {% for v in videos %}
+        <div class="card">
+          <img class="thumb" src="https://i.ytimg.com/vi/{{ v.id }}/mqdefault.jpg" alt="" loading="lazy">
+          <div class="body">
+            <span class="badge">{{ v.channel }}</span>
+            <span class="date">{{ v.published_at[:10] }}</span>
+            <h2><a href="{{ v.url }}" target="_blank" rel="noopener">{{ v.title }}</a></h2>
+            <div class="summary">{{ v.summary or "요약 없음" }}</div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="empty">아직 영상이 없습니다.<br>'새로 고침'을 눌러 가져오세요.</p>
+    {% endif %}
+  </div>
 </body>
 </html>
