@@ -7,4 +7,3 @@ __pycache__/
 .azure-deploy/
 deploy.zip
 image-*.png
-DEMO.md
