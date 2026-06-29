@@ -24,6 +24,10 @@ cd azure-superpowers && copilot
 ```
 이후 두 마디면 끝: `"방명록 웹앱 만들어줘"` → `"Azure에 배포해줘"` → 🌐 URL
 
+## 🌐 라이브 데모
+- 메인: https://msyoutube-347e0d.azurewebsites.net
+- 영상 인사이트 예시: https://msyoutube-347e0d.azurewebsites.net/video/JJTdXTf12oQ
+
 ## 활용 대상
 - `az`/IaC를 모르는 **비개발자**(사내 도구·캠페인 페이지·MVP)
 - 코드는 잘 만들지만 **배포까지 GHCP로 끝내고 싶은 개발자**
