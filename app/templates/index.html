@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MS YouTube 인사이트</title>
+  <style>
+    body { font-family: -apple-system, "Segoe UI", sans-serif; max-width: 860px; margin: 2rem auto; padding: 0 1rem; color: #222; }
+    header { display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 1.5rem; }
+    .refresh { background: #0078d4; color: #fff; border: 0; padding: .6rem 1.2rem; border-radius: 6px; cursor: pointer; }
+    .card { border: 1px solid #e1e1e1; border-radius: 8px; padding: 1rem; margin: 1rem 0; }
+    .meta { color: #666; font-size: .85rem; margin-bottom: .5rem; }
+    .summary { white-space: pre-wrap; line-height: 1.5; }
+    .empty { color: #888; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>MS YouTube 인사이트</h1>
+    <form action="/refresh" method="post">
+      <button class="refresh" type="submit">새로 고침</button>
+    </form>
+  </header>
+
+  {% if videos %}
+    {% for v in videos %}
+    <div class="card">
+      <div class="meta">{{ v.channel }} · {{ v.published_at }}</div>
+      <h2><a href="{{ v.url }}" target="_blank" rel="noopener">{{ v.title }}</a></h2>
+      <div class="summary">{{ v.summary or "요약 없음" }}</div>
+    </div>
+    {% endfor %}
+  {% else %}
+    <p class="empty">아직 영상이 없습니다. 새로 고침을 눌러 가져오세요.</p>
+  {% endif %}
+</body>
+</html>

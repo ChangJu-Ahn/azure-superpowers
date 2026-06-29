@@ -7,3 +7,4 @@ openai
 azure-identity
 pytest
 uvicorn
+httpx
