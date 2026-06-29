@@ -79,7 +79,7 @@ def list_videos(conn):
     cur = conn.cursor()
     cur.execute(
         "SELECT id, channel, title, published_at, url, fetched_at "
-        "FROM videos ORDER BY published_at DESC"
+        "FROM videos ORDER BY channel, published_at DESC"
     )
     cols = [c[0] for c in cur.description]
     return [dict(zip(cols, row)) for row in cur.fetchall()]

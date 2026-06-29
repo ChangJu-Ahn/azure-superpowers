@@ -19,11 +19,15 @@ app = FastAPI(title="MS YouTube 인사이트")
 
 
 def get_conn():
-    """DB 연결. PostgreSQL(키리스) 우선, 없으면 로컬 SQLite."""
+    """DB 연결. PostgreSQL(키리스: Entra 토큰) 우선, 없으면 로컬 SQLite."""
     if os.environ.get("PGHOST"):
         import psycopg
+        from azure.identity import DefaultAzureCredential
 
-        conn = psycopg.connect()
+        token = DefaultAzureCredential().get_token(
+            "https://ossrdbms-aad.database.windows.net/.default"
+        )
+        conn = psycopg.connect(password=token.token)
     else:
         import sqlite3
 
@@ -32,7 +36,10 @@ def get_conn():
             check_same_thread=False,
         )
     store.init_db(conn)
-    return conn
+    try:
+        yield conn
+    finally:
+        conn.close()
 
 
 def list_videos_with_summaries(conn):
