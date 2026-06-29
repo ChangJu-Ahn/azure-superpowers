@@ -53,8 +53,8 @@
       {% endfor %}
     </div>
 
-    <h2>전체 원문</h2>
-    <details><summary>원문(자막) 펼치기</summary><div class="panel" style="margin-top:.6rem">{{ video.transcript }}</div></details>
+    <h2>전체 원문{% if video.source == "description" %} <span style="font-size:.75rem;color:var(--muted)">(자막 차단 → 영상 설명 기반)</span>{% endif %}</h2>
+    <details><summary>원문 펼치기</summary><div class="panel" style="margin-top:.6rem">{{ video.transcript }}</div></details>
   </div>
 </body>
 </html>

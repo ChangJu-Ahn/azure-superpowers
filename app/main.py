@@ -8,7 +8,7 @@ from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 import store
-from fetcher import fetch_recent, fetch_transcript, fetch_video, parse_channel_input, parse_video_id
+from fetcher import fetch_recent, fetch_source_text, fetch_transcript, fetch_video, parse_channel_input, parse_video_id
 from summarizer import insights_ko, summarize_ko
 
 HANDLES = ["@microsoft", "@MicrosoftDeveloper", "@MicrosoftKorea"]
@@ -88,9 +88,11 @@ def video_detail(request: Request, video_id: str, conn=Depends(get_conn)):
     if video is None:
         return RedirectResponse(url="/", status_code=303)
     deployment = os.environ.get("AOAI_DEPLOYMENT", "")
+    api_key = os.environ.get("YOUTUBE_API_KEY", "")
     transcript = store.get_transcript(conn, video_id, "ko")
+    source = "transcript"
     if transcript is None:
-        transcript = fetch_transcript(video_id)
+        transcript, source = fetch_source_text(video_id, api_key)
         if transcript:
             store.save_transcript(conn, video_id, "ko", transcript)
     summary = store.get_summary(conn, video_id, "ko")
@@ -111,6 +113,7 @@ def video_detail(request: Request, video_id: str, conn=Depends(get_conn)):
     video["insights"] = insights
     video["sections"] = _parse_sections(insights)
     video["transcript"] = transcript or "원문(자막) 없음"
+    video["source"] = source
     return templates.TemplateResponse(request, "detail.html", {"video": video})
 
 
@@ -136,7 +139,7 @@ def remove_channel(handle: str = Form(""), conn=Depends(get_conn)):
     return RedirectResponse(url="/", status_code=303)
 
 
-def _summarize_pending(video_ids, deployment):
+def _summarize_pending(video_ids, deployment, api_key=""):
     """백그라운드: 자체 DB 연결로 자막 추출+요약을 채운다(요청 블로킹 방지)."""
     if not _refresh_lock.acquire(blocking=False):
         return
@@ -146,7 +149,7 @@ def _summarize_pending(video_ids, deployment):
             for vid in video_ids:
                 if store.has_summary(conn, vid, "ko"):
                     continue
-                text = fetch_transcript(vid)
+                text, _ = fetch_source_text(vid, api_key)
                 if text:
                     store.save_transcript(conn, vid, "ko", text)
                 try:
@@ -169,6 +172,7 @@ def refresh(background_tasks: BackgroundTasks, days: int = Form(20), conn=Depend
         store.upsert_video(conn, video)
         video_ids.append(video["id"])
     background_tasks.add_task(
-        _summarize_pending, video_ids, os.environ.get("AOAI_DEPLOYMENT", "")
+        _summarize_pending, video_ids, os.environ.get("AOAI_DEPLOYMENT", ""),
+        os.environ.get("YOUTUBE_API_KEY", "")
     )
     return RedirectResponse(url="/", status_code=303)

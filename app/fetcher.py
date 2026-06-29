@@ -118,6 +118,29 @@ def fetch_video(video_id, api_key, youtube=None):
     }
 
 
+def fetch_description(video_id, api_key, youtube=None):
+    """자막 차단 시 대체: 영상 설명(description)을 원문으로 사용."""
+    if not api_key:
+        return None
+    try:
+        v = fetch_video_full(video_id, api_key, youtube)
+        return v
+    except Exception:
+        return None
+
+
+def fetch_video_full(video_id, api_key, youtube=None):
+    if youtube is None:
+        youtube = _build_youtube(api_key)
+    resp = youtube.videos().list(part="snippet", id=video_id).execute()
+    items = resp.get("items") or []
+    if not items:
+        return None
+    snip = items[0]["snippet"]
+    desc = snip.get("description", "")
+    return desc.strip() or None
+
+
 def fetch_transcript(video_id, transcript_api=None):
     try:
         if transcript_api is None:
@@ -128,3 +151,14 @@ def fetch_transcript(video_id, transcript_api=None):
         return " ".join(snippet.text for snippet in fetched).strip()
     except Exception:
         return None
+
+
+def fetch_source_text(video_id, api_key=None, transcript_api=None):
+    """원문 확보: 자막 우선, 차단 시 영상 설명 폴백. (텍스트, 출처)."""
+    text = fetch_transcript(video_id, transcript_api)
+    if text:
+        return text, "transcript"
+    desc = fetch_description(video_id, api_key)
+    if desc:
+        return desc, "description"
+    return None, "none"
