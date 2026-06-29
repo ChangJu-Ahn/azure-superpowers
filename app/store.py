@@ -4,6 +4,8 @@ SQL is kept compatible with both backends. The connection's parameter style is
 detected so callers can pass either a psycopg or sqlite3 connection.
 """
 
+from datetime import datetime, timezone
+
 SCHEMA = [
     """
     CREATE TABLE IF NOT EXISTS videos (
@@ -67,12 +69,42 @@ def upsert_video(conn, video):
 
 def save_summary(conn, video_id, lang, text, model):
     p = _ph(conn)
-    sql = (
-        f"INSERT INTO summaries (video_id, lang, text, model, created_at) "
-        f"VALUES ({p}, {p}, {p}, {p}, {p})"
+    cur = conn.cursor()
+    cur.execute(
+        f"DELETE FROM summaries WHERE video_id = {p} AND lang = {p}",
+        (video_id, lang),
     )
-    conn.cursor().execute(sql, (video_id, lang, text, model, None))
+    created_at = datetime.now(timezone.utc).isoformat()
+    cur.execute(
+        f"INSERT INTO summaries (video_id, lang, text, model, created_at) "
+        f"VALUES ({p}, {p}, {p}, {p}, {p})",
+        (video_id, lang, text, model, created_at),
+    )
     conn.commit()
+
+
+def save_transcript(conn, video_id, lang, text):
+    p = _ph(conn)
+    cur = conn.cursor()
+    cur.execute(
+        f"DELETE FROM transcripts WHERE video_id = {p} AND lang = {p}",
+        (video_id, lang),
+    )
+    cur.execute(
+        f"INSERT INTO transcripts (video_id, lang, text) VALUES ({p}, {p}, {p})",
+        (video_id, lang, text),
+    )
+    conn.commit()
+
+
+def has_summary(conn, video_id, lang):
+    p = _ph(conn)
+    cur = conn.cursor()
+    cur.execute(
+        f"SELECT 1 FROM summaries WHERE video_id = {p} AND lang = {p} LIMIT 1",
+        (video_id, lang),
+    )
+    return cur.fetchone() is not None
 
 
 def list_videos(conn):

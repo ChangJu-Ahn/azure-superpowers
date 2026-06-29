@@ -45,7 +45,10 @@ def get_conn():
 def list_videos_with_summaries(conn):
     videos = store.list_videos(conn)
     cur = conn.cursor()
-    cur.execute("SELECT video_id, text FROM summaries WHERE lang = 'ko'")
+    cur.execute(
+        "SELECT video_id, text FROM summaries WHERE lang = 'ko' "
+        "ORDER BY created_at"
+    )
     summaries = {row[0]: row[1] for row in cur.fetchall()}
     for v in videos:
         v["summary"] = summaries.get(v["id"])
@@ -64,8 +67,12 @@ def index(request: Request, conn=Depends(get_conn)):
 def refresh(conn=Depends(get_conn)):
     api_key = os.environ.get("YOUTUBE_API_KEY", "")
     for video in fetch_recent(HANDLES, api_key):
-        text = fetch_transcript(video["id"]) or video["title"]
-        summary = summarize_ko(text)
         store.upsert_video(conn, video)
+        if store.has_summary(conn, video["id"], "ko"):
+            continue
+        text = fetch_transcript(video["id"])
+        if text:
+            store.save_transcript(conn, video["id"], "ko", text)
+        summary = summarize_ko(text or video["title"])
         store.save_summary(conn, video["id"], "ko", summary, os.environ.get("AOAI_DEPLOYMENT", ""))
     return RedirectResponse(url="/", status_code=303)

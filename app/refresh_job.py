@@ -40,9 +40,13 @@ def run_refresh(conn):
     model = os.environ.get("AOAI_DEPLOYMENT", "")
     count = 0
     for video in fetch_recent(HANDLES, api_key):
-        text = fetch_transcript(video["id"]) or video["title"]
-        summary = summarize_ko(text)
         store.upsert_video(conn, video)
+        if store.has_summary(conn, video["id"], "ko"):
+            continue
+        text = fetch_transcript(video["id"])
+        if text:
+            store.save_transcript(conn, video["id"], "ko", text)
+        summary = summarize_ko(text or video["title"])
         store.save_summary(conn, video["id"], "ko", summary, model)
         count += 1
     return count

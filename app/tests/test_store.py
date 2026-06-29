@@ -51,3 +51,24 @@ def test_save_summary():
     cur = conn.execute("SELECT video_id, lang, text, model FROM summaries")
     row = cur.fetchone()
     assert row == ("v", "ko", "요약", "gpt-4o")
+
+
+def test_save_summary_dedup_one_row():
+    conn = make_conn()
+    store.save_summary(conn, "v", "ko", "처음", "gpt-4o")
+    store.save_summary(conn, "v", "ko", "다시", "gpt-4o")
+    cur = conn.execute("SELECT text, created_at FROM summaries WHERE video_id='v' AND lang='ko'")
+    rows = cur.fetchall()
+    assert len(rows) == 1
+    assert rows[0][0] == "다시"
+    assert rows[0][1] is not None
+
+
+def test_save_transcript_stored():
+    conn = make_conn()
+    store.save_transcript(conn, "v", "ko", "대본")
+    store.save_transcript(conn, "v", "ko", "갱신")
+    cur = conn.execute("SELECT text FROM transcripts WHERE video_id='v' AND lang='ko'")
+    rows = cur.fetchall()
+    assert len(rows) == 1
+    assert rows[0][0] == "갱신"
